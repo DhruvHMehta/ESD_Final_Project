@@ -1,0 +1,18 @@
+AT+RST
+AT+CWMODE=3
+AT+CIPSTA="192.168.43.253"
+AT+CIPMUX=1
+AT+CIPSERVER=1,80
+AT+CWJAP="OnePlus 6T","password"
+AT+CIPSEND=0,608
+
+<!DOCTYPE html><html><body><h1>SanBot Control Page</h1><p>Please choose an option</p><p><b>TURN LEFT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"LEFT\"><button>LEFT</button></a></br></p><p><b>TURN RIGHT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"RIGHT\"><button>RIGHT</button></a></br></p><p><b>MOVE FORWARD</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"FORWARD\"><button>FORWARD</button></a></br></p><p><b>MOVE BACK</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"BACK\"><button>BACK</button></a></br></p></body></html>
+
+
+AT+RST								6,7
+AT+CWMODE=3							15,16
+AT+CIPSTA="192.168.43.253"
+AT+CIPMUX=1							15,16
+AT+CIPSERVER=1,80					21,22
+AT+CWJAP="OnePlus 6T","password"	
+AT+CIPSEND=0,608
