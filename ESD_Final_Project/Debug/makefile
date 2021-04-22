@@ -11,9 +11,9 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./cbfifo.obj" \
+"./main.obj" \
 "./startup_msp432p401r_ccs.obj" \
 "./system_msp432p401r.obj" \
-"./tempsense.obj" \
 "../msp432p401r.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
@@ -157,8 +157,8 @@ ESD_Final_Project.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "cbfifo.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" "tempsense.obj" 
-	-$(RM) "cbfifo.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" "tempsense.d" 
+	-$(RM) "cbfifo.obj" "main.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
+	-$(RM) "cbfifo.d" "main.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

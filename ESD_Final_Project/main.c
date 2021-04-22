@@ -7,6 +7,8 @@
  * main.c
  */
 
+#define MLX90614_I2C_ADDRESS     (0x5A)
+
 volatile char command[100];
 volatile uint8_t cmdptr, processflag;
 volatile uint32_t cur_time,ref_time;
@@ -103,6 +105,30 @@ void TA0_Init()
                     TIMER_A_CTL_MC__CONTINUOUS;
 }
 
+void I2C_Init(){
+
+    P1->SEL0 |= BIT6 | BIT7;                     // I2C pins
+
+    // Enable eUSCIB0 interrupt in NVIC module
+    NVIC->ISER[0] = 1 << ((EUSCIB0_IRQn) & 31);
+
+    // Configure USCI_B0 for I2C mode
+    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST;     // Software reset enabled
+    EUSCI_B0->CTLW0 = EUSCI_B_CTLW0_SWRST |     // Remain eUSCI in reset mode
+                EUSCI_B_CTLW0_MODE_3 |          // I2C mode
+                EUSCI_B_CTLW0_MST |             // Master mode
+                EUSCI_B_CTLW0_SYNC |            // Sync mode
+                EUSCI_B_CTLW0_SSEL__SMCLK;      // SMCLK
+
+
+    EUSCI_B0->BRW = 120;                         // baudrate = SMCLK / 120 = 100kHz
+    EUSCI_B0->I2CSA = MLX90614_I2C_ADDRESS ;    // Slave address (MLX 90614)
+
+    EUSCI_B0->IE |= EUSCI_A_IE_RXIE | EUSCI_A_IE_TXIE | EUSCI_B_IE_NACKIE ;
+
+    EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;// Release eUSCI from reset
+}
+
 void Enable_Interrupts()
 {
     /* Enable Port 1 interrupt on the NVIC */
@@ -128,10 +154,61 @@ void clear_buffer()
     __enable_irq();
 }
 
+uint8_t get_temp(void)
+{
+    uint16_t temp_low, temp_high, temp;
+    uint8_t PEC;
+
+    /* Turn on Transmitter */
+    EUSCI_B0->CTLW0 |= UCTR;
+
+    /* Send Start Bit */
+    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
+
+    /* Slave Address = 0x5A, Write Command */
+    EUSCI_B0->TXBUF = 0xB4;
+    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_TXIFG0));
+
+    /* Command = Read RAM 0x07 (Ta) */
+    EUSCI_B0->TXBUF = 0x07;
+    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_TXIFG0));
+
+    /* Send Repeated Start Bit */
+    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
+
+    /* Turn on Receiver */
+    EUSCI_B0->CTLW0 &= ~UCTR;
+
+    /* Slave Address = 0x5A, Read Command */
+    EUSCI_B0->TXBUF = 0xB5;
+    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_RXIFG0));
+
+    /* Read LSByte of temperature */
+    temp_low = EUSCI_B0->RXBUF;
+    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_RXIFG0));
+
+    /* Read MSByte of temperature */
+    temp_high = EUSCI_B0->RXBUF;
+
+    /* Send Stop Bit */
+    EUSCI_B0->CTLW0 |=EUSCI_B_CTLW0_TXSTP;
+    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_RXIFG0));
+
+    /* Read Packet Error Checking Byte */
+    PEC = EUSCI_B0->RXBUF;
+
+    temp_high = (temp_high << 8);
+
+    /* Calculation of temp from analog-Kelvin to Celsius */
+    temp = ((temp_low | temp_high)/50) - 273;
+
+    return temp;
+}
+
 
 void main(void)
 {
-    unsigned int i,j;
+    unsigned int i;
 
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
 
@@ -139,10 +216,19 @@ void main(void)
 	PWM_Init();
 	Switch_Init();
 	TA0_Init();
+    I2C_Init();
 
-    /* Manual control of Relay */
+    /* Manual control of Relay
+     * P3.2, 3,3 F/B of Left Motor
+     * P3.6, 3.7 F/B of Right Motor
+     *  */
+
     P3->DIR |= BIT2 | BIT3 | BIT6 | BIT7;
     P3->OUT &= ~(BIT2 | BIT3 | BIT6 | BIT7);
+
+    /* Red Indicator LED */
+    P1->DIR |= BIT0;
+    P1->OUT &= ~BIT0;
 
 	UART_Init();
 
@@ -239,7 +325,7 @@ void main(void)
 
         clear_buffer();
 
-        cbfifo_enqueue("AT+CIPSEND=0,541\r\n",18);
+        cbfifo_enqueue("AT+CIPSEND=0,756\r\n",18);
         EUSCI_A0->IE |= EUSCI_A_IE_TXIE;
 
         ref_time = cur_time;
@@ -248,13 +334,14 @@ void main(void)
 
        // if(command[25] == '>')
         //{
-            cbfifo_enqueue("<!DOCTYPE html><html><body><h1>SanBot Control Page</h1><p>Please choose an option</p><p><b>TURN LEFT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"LEFT\"><button>LEFT</button></a></br></p><p><b>TURN RIGHT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"RIGHT\"><button>RIGHT</button></a></br></p><p><b>MOVE FORWARD</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"FORWARD\"><button>FORWARD</button></a></br></p><p><b>MOVE BACK</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"BACK\"><button>BACK</button></a></br></p></body></html>\r\n", 541);
+            cbfifo_enqueue("<!DOCTYPE html><html><body><h1>SanBot Control Page</h1><p>Please choose an option</p><p><b>TURN LEFT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"LEFT\"><button>LEFT</button></a></br></p><p><b>TURN RIGHT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"RIGHT\"><button>RIGHT</button></a></br></p><p><b>MOVE FORWARD</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"FORWARD\"><button>FORWARD</button></a></br></p><p><b>MOVE BACK</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"BACK\"><button>BACK</button></a></br></p><p><b>STOP BOT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"STOP\"><button>STOP</button></a></br></p><p><b>Check Temperature</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"TEMP\"><button>TEMP</button></a></br></p></body></html>\r\n", 756);
             EUSCI_A0->IE |= EUSCI_A_IE_TXIE;
             // }
 
         while(1)
         {
             char* match;
+            uint8_t tempsense;
 
             if(processflag == 1)
             {
@@ -287,6 +374,33 @@ void main(void)
                 case 'R':
                     P3->OUT |= BIT2;
                     P3->OUT |= BIT7;
+                    break;
+
+                case 'S':
+                    P3->OUT &= ~(BIT2 | BIT3 | BIT6 | BIT7);
+                    break;
+
+                case 'T':
+                    /* Enable Port 1 interrupt on the NVIC */
+                    NVIC->ICER[1] = 1 << ((PORT1_IRQn) & 31);
+
+                    /* Enable eUSCIA0 interrupt in NVIC module */
+                    NVIC->ICER[0] = 1 << ((EUSCIA0_IRQn) & 31);
+
+                    /* Enable TA0 interrupt in NVIC module */
+                    NVIC->ICER[0] = 1 << ((TA0_0_IRQn) & 31);
+
+                    __enable_irq();
+                    tempsense = get_temp();
+
+                    if(tempsense > 20)
+                    {
+                        P1->OUT |= BIT0;
+                    }
+                    else P1->OUT |= BIT0;
+
+                    __disable_irq();
+                    Enable_Interrupts();
                     break;
                }
 

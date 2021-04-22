@@ -10,38 +10,38 @@ CMD_SRCS += \
 
 C_SRCS += \
 ../cbfifo.c \
+../main.c \
 ../startup_msp432p401r_ccs.c \
-../system_msp432p401r.c \
-../tempsense.c 
+../system_msp432p401r.c 
 
 C_DEPS += \
 ./cbfifo.d \
+./main.d \
 ./startup_msp432p401r_ccs.d \
-./system_msp432p401r.d \
-./tempsense.d 
+./system_msp432p401r.d 
 
 OBJS += \
 ./cbfifo.obj \
+./main.obj \
 ./startup_msp432p401r_ccs.obj \
-./system_msp432p401r.obj \
-./tempsense.obj 
+./system_msp432p401r.obj 
 
 OBJS__QUOTED += \
 "cbfifo.obj" \
+"main.obj" \
 "startup_msp432p401r_ccs.obj" \
-"system_msp432p401r.obj" \
-"tempsense.obj" 
+"system_msp432p401r.obj" 
 
 C_DEPS__QUOTED += \
 "cbfifo.d" \
+"main.d" \
 "startup_msp432p401r_ccs.d" \
-"system_msp432p401r.d" \
-"tempsense.d" 
+"system_msp432p401r.d" 
 
 C_SRCS__QUOTED += \
 "../cbfifo.c" \
+"../main.c" \
 "../startup_msp432p401r_ccs.c" \
-"../system_msp432p401r.c" \
-"../tempsense.c" 
+"../system_msp432p401r.c" 
 
 
