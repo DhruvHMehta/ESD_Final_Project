@@ -8,6 +8,7 @@
  */
 
 #define MLX90614_I2C_ADDRESS     (0x5A)
+#define SYSTICK_RELOAD  (12060)
 
 volatile char command[100];
 volatile uint8_t cmdptr, processflag;
@@ -42,19 +43,45 @@ void PWM_Init()
      * For SMCLK = 12Mhz, Period = ~8us */
     TIMER_A0->CCR[0] = 10000;
 
-    /* Set Initial Duty Cycle = 55% */
-    TIMER_A0->CCR[1] = 5000;
-    TIMER_A0->CCR[2] = 5000;
+    /* Set Initial Duty Cycle = 80% */
+    TIMER_A0->CCR[1] = 8000;
+    TIMER_A0->CCR[2] = 8000;
 
     /* Set Timer to SET/RESET Mode */
     TIMER_A0->CCTL[1] = TIMER_A_CCTLN_OUTMOD_6;
     TIMER_A0->CCTL[2] = TIMER_A_CCTLN_OUTMOD_6;
 
-    /* Select SMCLK Source (3Mhz) and Count Up, Start */
+    /* Select SMCLK Source (12Mhz) and Count Up, Start */
     TIMER_A0->CTL = TIMER_A_CTL_TASSEL_2 |
                     TIMER_A_CTL_MC__UP |
                     TIMER_A_CTL_CLR;
 }
+
+/*
+void TA1_Init()
+{
+    /* Configuring Timer0 for 1ms Ticks/Interrupts /
+    TIMER_A1->CCTL[0] = TIMER_A_CCTLN_CCIE; // TACCR0 interrupt enabled
+    TIMER_A1->CCR[0] = 1500;
+    TIMER_A1->CTL = TIMER_A_CTL_SSEL__SMCLK | TIMER_A_CTL_ID__8 | // SMCLK, continuous mode
+                    TIMER_A_CTL_MC__CONTINUOUS;
+}
+*/
+
+void init_ticktime()
+{
+    /* Initialize Counter Value to 0 */
+    SysTick->VAL = 0;
+
+    /* Set the LOAD Value to 4800000 for 100ms Ticks */
+    SysTick->LOAD = (SYSTICK_RELOAD);
+
+    /* Set the Control Register for Internal ClockSource (48Mhz)
+     * Enable Interrupt on Overflow and Enable the Timer */
+    SysTick->CTRL = (SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk);
+
+}
+
 
 /* Pin Setup for Switch Interrupt Mode */
 void Switch_Init()
@@ -95,14 +122,6 @@ void UART_Init()
     EUSCI_A0->IFG &= ~(EUSCI_A_IFG_RXIFG);    // Clear eUSCI RX interrupt flag
     EUSCI_A0->IE |= (EUSCI_A_IE_RXIE | EUSCI_A_IE_TXIE);          // Enable USCI_A0 TX and RX interrupt
 
-}
-
-void TA0_Init()
-{
-    TIMER_A0->CCTL[0] = TIMER_A_CCTLN_CCIE; // TACCR0 interrupt enabled
-    TIMER_A0->CCR[0] = 50000;
-    TIMER_A0->CTL = TIMER_A_CTL_SSEL__SMCLK | TIMER_A_CTL_ID__8 | // SMCLK, continuous mode
-                    TIMER_A_CTL_MC__CONTINUOUS;
 }
 
 void I2C_Init(){
@@ -215,7 +234,8 @@ void main(void)
 	ClockSource_Init();
 	PWM_Init();
 	Switch_Init();
-	TA0_Init();
+	//TA1_Init();
+	init_ticktime();
     I2C_Init();
 
     /* Manual control of Relay
@@ -223,8 +243,12 @@ void main(void)
      * P3.6, 3.7 F/B of Right Motor
      *  */
 
-    P3->DIR |= BIT2 | BIT3 | BIT6 | BIT7;
-    P3->OUT &= ~(BIT2 | BIT3 | BIT6 | BIT7);
+    P4->DIR |= BIT0 | BIT1 | BIT6 | BIT7;
+    P4->OUT &= ~(BIT0 | BIT1 | BIT6 | BIT7);
+
+    /* Debug Pins */
+    //P4->DIR |= BIT4 | BIT5 | BIT7;
+    //P4->OUT &= ~(BIT4 | BIT5 | BIT7);
 
     /* Red Indicator LED */
     P1->DIR |= BIT0;
@@ -347,7 +371,7 @@ void main(void)
             {
                 __disable_irq();
 
-                P3->OUT &= ~(BIT2 | BIT3 | BIT6 | BIT7);
+               // P3->OUT &= ~(BIT2 | BIT3 | BIT6 | BIT7);
 
                 command[cmdptr++] = '\0';
 
@@ -356,38 +380,39 @@ void main(void)
 
                 switch(*match)
                {
-                case 'F':
-                    P3->OUT |= BIT2;
-                    P3->OUT |= BIT6;
-                    break;
+                case 'R':
+                    P4->OUT |= BIT0;
+                    P4->OUT |= BIT6;
 
-                case 'B':
-                    P3->OUT |= BIT3;
-                    P3->OUT |= BIT7;
                     break;
 
                 case 'L':
-                    P3->OUT |= BIT3;
-                    P3->OUT |= BIT6;
+                    P4->OUT |= BIT1;
+                    P4->OUT |= BIT7;
                     break;
 
-                case 'R':
-                    P3->OUT |= BIT2;
-                    P3->OUT |= BIT7;
+                case 'F':
+                    P4->OUT |= BIT1;
+                    P4->OUT |= BIT6;
+                    break;
+
+                case 'B':
+                    P4->OUT |= BIT0;
+                    P4->OUT |= BIT7;
                     break;
 
                 case 'S':
-                    P3->OUT &= ~(BIT2 | BIT3 | BIT6 | BIT7);
+                    P4->OUT &= ~(BIT0 | BIT1 | BIT6 | BIT7);
                     break;
 
                 case 'T':
-                    /* Enable Port 1 interrupt on the NVIC */
+                    /* Disable Port 1 interrupt on the NVIC */
                     NVIC->ICER[1] = 1 << ((PORT1_IRQn) & 31);
 
-                    /* Enable eUSCIA0 interrupt in NVIC module */
+                    /* Disable eUSCIA0 interrupt in NVIC module */
                     NVIC->ICER[0] = 1 << ((EUSCIA0_IRQn) & 31);
 
-                    /* Enable TA0 interrupt in NVIC module */
+                    /* Disable TA0 interrupt in NVIC module */
                     NVIC->ICER[0] = 1 << ((TA0_0_IRQn) & 31);
 
                     __enable_irq();
@@ -424,22 +449,22 @@ void PORT1_IRQHandler(void)
     /* Check for interrupt on Pin 1 */
     if(P1->IFG & BIT1)
     {
-        P3->OUT ^= BIT2;
-        P3->OUT ^= BIT6;
+        P4->OUT ^= BIT1;
+        P4->OUT ^= BIT6;
     }
 
     /* Check for interrupt on Pin 4 */
     else if(P1->IFG & BIT4)
     {
-        P3->OUT ^= BIT3;
-        P3->OUT ^= BIT7;
+        P4->OUT ^= BIT3;
+        P4->OUT ^= BIT7;
     }
 
     // Delay for switch debounce
     for(i = 0; i < 10000; i++);
 
-    P1->IFG &= ~BIT1;
-    P1->IFG &= ~BIT4;
+    P1->IFG &= ~BIT0;
+    P1->IFG &= ~BIT7;
 }
 
 /* UART0 ISR */
@@ -479,17 +504,33 @@ void EUSCIA0_IRQHandler(void)
     }
 }
 
-/*TA0 ISR */
-void TA0_0_IRQHandler(void) {
+/*TA1 ISR */
+void TA1_0_IRQHandler(void) {
 
-    static uint8_t counter = 0;
+    static uint16_t counter = 0;
 
-    if(counter == 20)
+    if(counter == 1000)
     {
         cur_time++;
         counter = 0;
+       // P4->OUT ^= BIT5;
     }
+    //P4->OUT ^= BIT4;
     counter++;
-    TIMER_A0->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG;
-    TIMER_A0->CCR[0] += 50000;              // Add Offset to TACCR0
+    TIMER_A1->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG;
+    TIMER_A1->CCR[0] += 1500;              // Add Offset to TACCR0
+}
+
+void SysTick_Handler()
+{
+    static uint16_t counter = 0;
+
+    if(counter == 1000)
+    {
+        cur_time++;
+        counter = 0;
+        P4->OUT ^= BIT5;
+    }
+    //P4->OUT ^= BIT4;
+    counter++;
 }
