@@ -4,7 +4,7 @@
 #include "PCD8544_Core.h"
 #include "PCD8544_Pixel.h"
 #include <string.h>
-
+#include <stdio.h>
 
 /**
  * main.c
@@ -29,7 +29,7 @@ static char* MULTIPLE_CON_ON = "AT+CIPMUX=1\r\n";
 static char* TCP_CREATE = "AT+CIPSERVER=1,80\r\n";
 static char* JOIN_AP = "AT+CWJAP_CUR=\"OnePlus 6T\",\"password\"\r\n";
 static char* CONN_STATUS = "AT+CIPSTATUS\r\n";
-static char* IP_DATALEN = "AT+CIPSEND=0,756\r\n";
+static char* IP_DATALEN = "AT+CIPSEND=0,1102\r\n";
 
 /* CRC-8 Table */
 static const uint8_t crc_table[] = {
@@ -218,9 +218,18 @@ void GPIO_Init()
     P4->DIR |= BIT0 | BIT1 | BIT6 | BIT7;
     P4->OUT &= ~(BIT0 | BIT1 | BIT6 | BIT7);
 
-    /* Red Indicator LED */
+    /* Red Indicator LED for Temperature */
     P1->DIR |= BIT0;
     P1->OUT &= ~BIT0;
+
+    /* Red Indicator LED for Obstacle Detection */
+    P2->DIR |= BIT0;
+    P2->OUT &= ~BIT0;
+
+    /* Blue "Ultraviolet" LED for Sanitization */
+    P2->DIR |= BIT2;
+    P2->OUT &= ~BIT2;
+
 }
 
 void UART_Init()
@@ -349,14 +358,14 @@ void Ultrasonic_GetData()
     distance = ultra_read/58;     // converting ECHO lenght into cm
     __enable_irq();
 
-    if(distance < 30 && distance != 0)
+    if(distance < 30)
     {
-        P1->OUT |= BIT0;            //turning LED on if distance is less than 30cm and if distance isn't 0.
+        P2->OUT |= BIT0;            //turning LED on if distance is less than 30cm and if distance isn't 0.
         P4->OUT &= ~(BIT0 | BIT1 | BIT6 | BIT7);
     }
 
     else
-        P1->OUT &= ~BIT0;
+        P2->OUT &= ~BIT0;
 }
 
 void Enable_Interrupts()
@@ -547,7 +556,7 @@ void main(void)
 
    // if(command[25] == '>')
     //{
-        cbfifo_enqueue("<!DOCTYPE html><html><body><h1>SanBot Control Page</h1><p>Please choose an option</p><p><b>TURN LEFT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"LEFT\"><button>LEFT</button></a></br></p><p><b>TURN RIGHT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"RIGHT\"><button>RIGHT</button></a></br></p><p><b>MOVE FORWARD</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"FORWARD\"><button>FORWARD</button></a></br></p><p><b>MOVE BACK</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"BACK\"><button>BACK</button></a></br></p><p><b>STOP BOT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"STOP\"><button>STOP</button></a></br></p><p><b>Check Temperature</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"TEMP\"><button>TEMP</button></a></br></p></body></html>\r\n", 756);
+        cbfifo_enqueue("<!DOCTYPE html><html><body><h1>SanBot Control Page</h1><p>Please choose an option</p><p><b>TURN LEFT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"LEFT\"><button>LEFT</button></a></br></p><p><b>TURN RIGHT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"RIGHT\"><button>RIGHT</button></a></br></p><p><b>MOVE FORWARD</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"FORWARD\"><button>FORWARD</button></a></br></p><p><b>MOVE BACK</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"BACK\"><button>BACK</button></a></br></p><p><b>HALT BOT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"HALT\"><button>HALT</button></a></br></p><p><b>Check Temperature</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"TEMP\"><button>TEMP</button></a></br></p><p><b>UV ON</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"SANITIZE\"><button>SANITIZE</button></a></br></p><p><b>UV OFF</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"OFF\"><button>OFF</button></a></br></p></body></html>\r\n", 1102);
         EUSCI_A0->IE |= EUSCI_A_IE_TXIE;
         // }
 
@@ -595,9 +604,19 @@ void main(void)
                     P4->OUT &= ~(BIT1 | BIT6);
                     break;
 
-                /* Stop Bot */
-                case 'S':
+                /* Halt Bot */
+                case 'H':
                     P4->OUT &= ~(BIT0 | BIT1 | BIT6 | BIT7);
+                    break;
+
+                /* Turn on Sanitize LED */
+                case 'S':
+                    P2->OUT |= BIT2;
+                    break;
+
+                /* Turn off Sanitize LED */
+                case 'O':
+                    P2->OUT &= ~BIT2;
                     break;
 
                 /* Get the temperature value and check it */

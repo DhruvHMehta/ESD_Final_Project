@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include "cbfifo.h"
 
-#define SIZE (1024)                          /* Size of Buffer */
+#define SIZE (2048)                          /* Size of Buffer */
 
 struct Buffer{
 uint8_t CirBuf[SIZE];                       /* Buffer */
