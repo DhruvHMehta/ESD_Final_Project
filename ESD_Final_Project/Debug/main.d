@@ -24,6 +24,8 @@ main.obj: D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/std
 main.obj: ../PCD8544_Character.h
 main.obj: ../PCD8544_Core.h
 main.obj: ../PCD8544_Pixel.h
+main.obj: ../spi.h
+main.obj: ../adxl345.h
 main.obj: D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/string.h
 main.obj: D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/stdio.h
 main.obj: D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/stdarg.h
@@ -52,6 +54,8 @@ D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/stdlib.h:
 ../PCD8544_Character.h: 
 ../PCD8544_Core.h: 
 ../PCD8544_Pixel.h: 
+../spi.h: 
+../adxl345.h: 
 D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/string.h: 
 D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/stdio.h: 
 D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/stdarg.h: 

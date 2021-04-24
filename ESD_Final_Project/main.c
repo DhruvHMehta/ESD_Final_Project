@@ -3,6 +3,8 @@
 #include "PCD8544_Character.h"
 #include "PCD8544_Core.h"
 #include "PCD8544_Pixel.h"
+#include "spi.h"
+#include "adxl345.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -29,7 +31,7 @@ static char* MULTIPLE_CON_ON = "AT+CIPMUX=1\r\n";
 static char* TCP_CREATE = "AT+CIPSERVER=1,80\r\n";
 static char* JOIN_AP = "AT+CWJAP_CUR=\"OnePlus 6T\",\"password\"\r\n";
 static char* CONN_STATUS = "AT+CIPSTATUS\r\n";
-static char* IP_DATALEN = "AT+CIPSEND=0,1102\r\n";
+static char* IP_DATALEN = "AT+CIPSEND=0,1329\r\n";
 
 /* CRC-8 Table */
 static const uint8_t crc_table[] = {
@@ -271,7 +273,7 @@ void UART_Init()
 void I2C_Init(){
 
     /* I2C pins (Pin multiplexing) */
-    P1->SEL0 |= BIT6 | BIT7;
+    P6->SEL0 |= BIT4 | BIT5;
 
     /* Configure USCI_B0 for I2C mode
      * Software reset enabled
@@ -281,24 +283,24 @@ void I2C_Init(){
      * Sync mode
      * SMCLK
      */
-    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST;
-    EUSCI_B0->CTLW0 = EUSCI_B_CTLW0_SWRST |
+    EUSCI_B1->CTLW0 |= EUSCI_B_CTLW0_SWRST;
+    EUSCI_B1->CTLW0 = EUSCI_B_CTLW0_SWRST |
                 EUSCI_B_CTLW0_MODE_3 |
                 EUSCI_B_CTLW0_MST |
                 EUSCI_B_CTLW0_SYNC |
                 EUSCI_B_CTLW0_SSEL__SMCLK;
 
     /* baudrate = SMCLK / 120 = 100kHz */
-    EUSCI_B0->BRW = 120;
+    EUSCI_B1->BRW = 120;
 
     /* Slave address (MLX 90614) */
-    EUSCI_B0->I2CSA = MLX90614_I2C_ADDRESS ;
+    EUSCI_B1->I2CSA = MLX90614_I2C_ADDRESS ;
 
     /* Enable interrupts for Receive, Transmit and No Acknowledge */
-    EUSCI_B0->IE |= EUSCI_A_IE_RXIE | EUSCI_A_IE_TXIE | EUSCI_B_IE_NACKIE ;
+    EUSCI_B1->IE |= EUSCI_A_IE_RXIE | EUSCI_A_IE_TXIE | EUSCI_B_IE_NACKIE ;
 
     /* Release eUSCI from reset */
-    EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;
+    EUSCI_B1->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;
 }
 
 void Ultrasonic_Init()
@@ -384,6 +386,8 @@ void Enable_Interrupts()
 
     /* Enable eUSCIB0 interrupt in NVIC module */
     NVIC->ISER[0] = 1 << ((EUSCIB0_IRQn) & 31);
+
+    ADXL345_Port4_Interrupt_Enable();
 }
 
 
@@ -408,42 +412,42 @@ int16_t get_temp(void)
     uint8_t crcbuf[5] = {0xB4, 0x07, 0xB5, 0x00, 0x00};
 
     /* Turn on Transmitter */
-    EUSCI_B0->CTLW0 |= UCTR;
+    EUSCI_B1->CTLW0 |= UCTR;
 
     /* Send Start Bit */
-    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
+    EUSCI_B1->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
 
     /* Slave Address = 0x5A, Write Command */
-    EUSCI_B0->TXBUF = 0xB4;
-    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_TXIFG0));
+    EUSCI_B1->TXBUF = 0xB4;
+    while (!(EUSCI_B1->IFG &  EUSCI_B_IFG_TXIFG0));
 
     /* Command = Read RAM 0x07 (Ta) */
-    EUSCI_B0->TXBUF = 0x07;
-    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_TXIFG0));
+    EUSCI_B1->TXBUF = 0x07;
+    while (!(EUSCI_B1->IFG &  EUSCI_B_IFG_TXIFG0));
 
     /* Send Repeated Start Bit */
-    EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
+    EUSCI_B1->CTLW0 |= EUSCI_B_CTLW0_TXSTT;
 
     /* Turn on Receiver */
-    EUSCI_B0->CTLW0 &= ~UCTR;
+    EUSCI_B1->CTLW0 &= ~UCTR;
 
     /* Slave Address = 0x5A, Read Command */
-    EUSCI_B0->TXBUF = 0xB5;
-    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_RXIFG0));
+    EUSCI_B1->TXBUF = 0xB5;
+    while (!(EUSCI_B1->IFG &  EUSCI_B_IFG_RXIFG0));
 
     /* Read LSByte of temperature */
-    temp_low = EUSCI_B0->RXBUF;
-    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_RXIFG0));
+    temp_low = EUSCI_B1->RXBUF;
+    while (!(EUSCI_B1->IFG &  EUSCI_B_IFG_RXIFG0));
 
     /* Read MSByte of temperature */
-    temp_high = EUSCI_B0->RXBUF;
+    temp_high = EUSCI_B1->RXBUF;
 
     /* Send Stop Bit */
-    EUSCI_B0->CTLW0 |=EUSCI_B_CTLW0_TXSTP;
-    while (!(EUSCI_B0->IFG &  EUSCI_B_IFG_RXIFG0));
+    EUSCI_B1->CTLW0 |=EUSCI_B_CTLW0_TXSTP;
+    while (!(EUSCI_B1->IFG &  EUSCI_B_IFG_RXIFG0));
 
     /* Read Packet Error Checking Byte */
-    PEC = EUSCI_B0->RXBUF;
+    PEC = EUSCI_B1->RXBUF;
 
     crcbuf[3] = temp_low;
     crcbuf[4] = temp_high;
@@ -520,7 +524,7 @@ void main(void)
 	P4->DIR |= BIT5;
 	P4->OUT &= ~BIT5;
 
-	/* Intialize all modules */
+	/* Initialize all modules */
 	ClockSource_Init();
 	PWM_Init();
 	Switch_Init();
@@ -530,6 +534,9 @@ void main(void)
     Ultrasonic_Init();
 	UART_Init();
 	LCD_Init();
+    ADXL345_SPI_Init();
+    ADXL345_GPIO_Init();
+    ADXL345_Init();
 
 	/* Enable Interrupts and configure ESP */
     Enable_Interrupts();
@@ -556,7 +563,7 @@ void main(void)
 
    // if(command[25] == '>')
     //{
-        cbfifo_enqueue("<!DOCTYPE html><html><body><h1>SanBot Control Page</h1><p>Please choose an option</p><p><b>TURN LEFT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"LEFT\"><button>LEFT</button></a></br></p><p><b>TURN RIGHT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"RIGHT\"><button>RIGHT</button></a></br></p><p><b>MOVE FORWARD</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"FORWARD\"><button>FORWARD</button></a></br></p><p><b>MOVE BACK</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"BACK\"><button>BACK</button></a></br></p><p><b>HALT BOT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"HALT\"><button>HALT</button></a></br></p><p><b>Check Temperature</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"TEMP\"><button>TEMP</button></a></br></p><p><b>UV ON</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"SANITIZE\"><button>SANITIZE</button></a></br></p><p><b>UV OFF</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"OFF\"><button>OFF</button></a></br></p></body></html>\r\n", 1102);
+        cbfifo_enqueue("<!DOCTYPE html><html><head><style>body {background-color:#eedc9b;}</style></head><body><h1>SanBot Control Page</h1><p>Please choose an option</p><p><b>TURN LEFT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"LEFT\"><button>LEFT</button></a></br></p><p><b>TURN RIGHT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"RIGHT\"><button>RIGHT</button></a></br></p><p><b>MOVE FORWARD</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"FORWARD\"><button>FORWARD</button></a></br></p><p><b>MOVE BACK</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"BACK\"><button>BACK</button></a></br></p><p><b>HALT BOT</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"HALT\"><button>HALT</button></a></br></p><p><b>Check Temperature</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"TEMP\"><button>TEMP</button></a></br></p><p><b>Sanitize</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"SANITIZE\"><button>SANITIZE</button></a></br></p><p><b>UV OFF</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"OFF\"><button>OFF</button></a></br></p><p><b>Speed Control</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"+\"><button>+</button></a>&nbsp;<a href=\"-\"><button>-</button></a></br></p></body></html>\r\n", 1329);
         EUSCI_A0->IE |= EUSCI_A_IE_TXIE;
         // }
 
@@ -617,6 +624,18 @@ void main(void)
                 /* Turn off Sanitize LED */
                 case 'O':
                     P2->OUT &= ~BIT2;
+                    break;
+
+                /* Increase speed of bot */
+                case '+':
+                    if(TIMER_A0->CCR[2] <= 9000)
+                        TIMER_A0->CCR[2] += 1000;
+                    break;
+
+                /* Reduce speed of bot */
+                case '-':
+                    if(TIMER_A0->CCR[2] >= 6000)
+                        TIMER_A0->CCR[2] -= 1000;
                     break;
 
                 /* Get the temperature value and check it */
@@ -736,6 +755,43 @@ void PORT2_IRQHandler(void)
     }
 
     __enable_irq();
+}
+
+void PORT4_IRQHandler()
+{
+
+
+  if(P4->IFG & BIT4)
+  {
+    /* clear interrupt */
+    uint32_t i;
+    for(i = 0; i < 10000; i++);
+
+    ADXL345_SPI_Read(ADXL_INT_SOURCE);
+    P4->IFG &= ~(BIT4);
+
+    /*
+     *
+     * Rough Surface Detected
+     *
+     * */
+    PCD8544_Clear();
+    PCD8544_Puts("Caution : Rough  Surface Detected",0,1);
+
+  }
+
+
+  if(P4->IFG & BIT5)
+  {
+    P4->IFG &= ~(BIT5);
+
+    /*
+      *
+      * Bot is Free Falling
+      *
+      * */
+
+  }
 }
 
 /* UART0 ISR */
