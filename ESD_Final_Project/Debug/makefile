@@ -10,6 +10,9 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
+"./PCD8544_Character.obj" \
+"./PCD8544_Core.obj" \
+"./PCD8544_Pixel.obj" \
 "./cbfifo.obj" \
 "./main.obj" \
 "./startup_msp432p401r_ccs.obj" \
@@ -157,8 +160,8 @@ ESD_Final_Project.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "cbfifo.obj" "main.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
-	-$(RM) "cbfifo.d" "main.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
+	-$(RM) "PCD8544_Character.obj" "PCD8544_Core.obj" "PCD8544_Pixel.obj" "cbfifo.obj" "main.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
+	-$(RM) "PCD8544_Character.d" "PCD8544_Core.d" "PCD8544_Pixel.d" "cbfifo.d" "main.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

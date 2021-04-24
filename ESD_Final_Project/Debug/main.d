@@ -21,6 +21,9 @@ main.obj: D:/Program\ Files/ccs/ccs_base/arm/include/CMSIS/cmsis_ccs.h
 main.obj: D:/Program\ Files/ccs/ccs_base/arm/include/system_msp432p401r.h
 main.obj: ../cbfifo.h
 main.obj: D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/stdlib.h
+main.obj: ../PCD8544_Character.h
+main.obj: ../PCD8544_Core.h
+main.obj: ../PCD8544_Pixel.h
 main.obj: D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/string.h
 
 ../main.c: 
@@ -44,4 +47,7 @@ D:/Program\ Files/ccs/ccs_base/arm/include/CMSIS/cmsis_ccs.h:
 D:/Program\ Files/ccs/ccs_base/arm/include/system_msp432p401r.h: 
 ../cbfifo.h: 
 D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/stdlib.h: 
+../PCD8544_Character.h: 
+../PCD8544_Core.h: 
+../PCD8544_Pixel.h: 
 D:/Program\ Files/ccs/tools/compiler/ti-cgt-arm_20.2.2.LTS/include/string.h: 

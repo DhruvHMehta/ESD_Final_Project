@@ -1,1 +1,1 @@
-"./cbfifo.obj" "./main.obj" "./startup_msp432p401r_ccs.obj" "./system_msp432p401r.obj" "../msp432p401r.cmd" -llibc.a 
+"./PCD8544_Character.obj" "./PCD8544_Core.obj" "./PCD8544_Pixel.obj" "./cbfifo.obj" "./main.obj" "./startup_msp432p401r_ccs.obj" "./system_msp432p401r.obj" "../msp432p401r.cmd" -llibc.a 

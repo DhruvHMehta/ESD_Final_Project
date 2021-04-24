@@ -52,6 +52,10 @@ int main(void)
     WDT_A->CTL = WDT_A_CTL_PW |             // Stop watchdog timer
             WDT_A_CTL_HOLD;
 
+    P4->DIR |= BIT5;
+    P4->OUT &= ~BIT5;
+
+
     /*         UART                      */
     CS->KEY = CS_KEY_VAL;                   // Unlock CS module for register access
     CS->CTL0 = 0;                           // Reset tuning parameters
@@ -123,12 +127,16 @@ int main(void)
         //        P2->IE &= ~BIT7;          // disable interupt
         P2->DIR |= BIT6;          // trigger pin as output
         P2->OUT |= BIT6;          // generate pulse
+        //P4->OUT |= BIT5;
         Delay(100);               // for 10us
+        //P4->OUT &= ~BIT5;
         P2->OUT &= ~BIT6;         // stop pulse
         //        P2->IE |= BIT7;          // disable interupt
         P2->IFG = 0;              // clear P2 interrupt just in case anything happened before
         P2->IES &= ~BIT7;         // rising edge on ECHO pin
+        //P4->OUT |= BIT5;
         Delay(30000);             // delay for 30ms (after this time echo times out if there is no object detected)
+        //P4->OUT &= ~BIT5;
         //Delay(60000);
         if (sensor == 580000){
             sensor=0;
@@ -194,6 +202,7 @@ void TA0_0_IRQHandler(void)
  */
     //    Interrupt gets triggered for every clock cycle in SMCLK Mode counting number of pulses
     miliseconds++;
+    P4->OUT ^= BIT5;
     TIMER_A0->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG;
     TIMER_A0->CCR[0] += 1500;
     //    printf("milliseconds: "+miliseconds);
