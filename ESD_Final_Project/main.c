@@ -767,7 +767,7 @@ void PORT4_IRQHandler()
     uint32_t i;
     for(i = 0; i < 10000; i++);
 
-    ADXL345_SPI_Read(ADXL_INT_SOURCE);
+    ADXL345_SPI_Read(ADXL345_INT_SOURCE);
     P4->IFG &= ~(BIT4);
 
     /*

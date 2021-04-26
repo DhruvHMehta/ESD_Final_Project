@@ -1,8 +1,6 @@
 /*
  * adxl345.c
  *
- *  Created on: 25-Apr-2021
- *      Author: Shrikant
  */
 
 #include "adxl345.h"
@@ -15,23 +13,23 @@
 
 void ADXL345_Init()
 {
-  ADXL345_SPI_Write(ADXL_POWER_CTL, 0x08); /* enable measurements */
-  ADXL345_SPI_Write(ADXL_INT_ENABLE, 0x00); /* disable interrupts */
-  ADXL345_SPI_Write(ADXL_INT_MAP, 0x04); /* map all interrupts to INT1 */
-  ADXL345_SPI_Write(ADXL_DATA_FORMAT, 0x00); /* set range to 2G */
+  ADXL345_SPI_Write(ADXL345_POWER_CTL, 0x08); /* enable measurements */
+  ADXL345_SPI_Write(ADXL345_INT_ENABLE, 0x00); /* disable interrupts */
+  ADXL345_SPI_Write(ADXL345_INT_MAP, 0x04); /* map all interrupts to INT1 */
+  ADXL345_SPI_Write(ADXL345_DATA_FORMAT, 0x00); /* set range to 2G */
 
   //Free Fall
-  ADXL345_SPI_Write(ADXL_THRESH_FF, FREE_FALL_ACC_THRESH);
-  ADXL345_SPI_Write(ADXL_TIME_FF, FREE_FALL_TIME);
+  ADXL345_SPI_Write(ADXL345_THRESH_FF, FREE_FALL_ACC_THRESH);
+  ADXL345_SPI_Write(ADXL345_TIME_FF, FREE_FALL_TIME);
 
 
   //Actvity
-  ADXL345_SPI_Write(ADXL_ACT_INACT_CTL,0x20);
-  ADXL345_SPI_Write(ADXL_THRESH_ACT,Y_AXIS_THRESH);
+  ADXL345_SPI_Write(ADXL345_ACT_INACT_CTL,0x20);
+  ADXL345_SPI_Write(ADXL345_THRESH_ACT,Y_AXIS_THRESH);
 
-  ADXL345_SPI_Write(ADXL_INT_ENABLE, 0x14); /* enable tap interrupts */
+  ADXL345_SPI_Write(ADXL345_INT_ENABLE, 0x14); /* enable tap interrupts */
 
-  ADXL345_SPI_Read(ADXL_INT_SOURCE); /* clear all interrupts */
+  ADXL345_SPI_Read(ADXL345_INT_SOURCE); /* clear all interrupts */
 }
 
 void ADXL345_GPIO_Init()
@@ -51,7 +49,7 @@ void ADXL345_GPIO_Init()
 void ADXL345_Port4_Interrupt_Enable()
 {
 
-    ADXL345_SPI_Read(ADXL_INT_SOURCE); /* clear interrupts */
+    ADXL345_SPI_Read(ADXL345_INT_SOURCE); /* clear interrupts */
     P4->IFG &= ~(BIT4);
     NVIC_EnableIRQ(PORT4_IRQn);
     __enable_interrupts();
