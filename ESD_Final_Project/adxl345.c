@@ -1,15 +1,15 @@
 /*
- * adxl345.c
+ * adxl345.c - Source file containing implementaion of core ADXL345 functions
  *
  */
 
 #include "adxl345.h"
 
-#define Y_AXIS_THRESH (0x24)
+#define Y_AXIS_THRESH (0x24)                                         // Macro definition for Acceleration threshold for activity detection
 
-#define FREE_FALL_ACC_THRESH (0x28)
+#define FREE_FALL_ACC_THRESH (0x28)                                  // Macro definition for Acceleration threshold for free fall detection
 
-#define FREE_FALL_TIME  (0x29)
+#define FREE_FALL_TIME  (0x29)                                       // Macro definition for time threshold for free fall detection
 
 void ADXL345_Init()
 {

@@ -1,11 +1,13 @@
 /*
- * PCD8544_Character.c
+ * PCD8544_Character.c - Source file containing implementation of character display functionality
  *
- *  Created on: 23-Apr-2021
- *      Author: Shrikant
  */
 
 #include "PCD8544_Character.h"
+
+
+
+// Character table for displaying characters on GLCD
 
 const char font_table[][5] = {
                               {0x00, 0x00, 0x00, 0x00, 0x00} // 20
@@ -114,14 +116,15 @@ void PCD8544_Putc(char c) {
     int row = c - 0x20;
 
     for ( i = 0; i < 5; i++)
-        PCD8544_Data_Write(font_table[row][i]);
+        PCD8544_Data_Write(font_table[row][i]);       //Display Character on GLCD
 
 }
 
 void PCD8544_Puts(char *c,uint8_t x, uint8_t y) {
 
     PCD8544_SetCursor(x,y);
-
+    
+    //Display String on GLCD
     while (*c) {
         PCD8544_Putc(*c++);
     }
