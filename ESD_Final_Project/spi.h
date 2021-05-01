@@ -1,49 +1,35 @@
 /*
- * spi.h
+ * spi.h - Header File For Implementation Of SPI Module For ADXL345
  *
- *  Created on: 14-Apr-2021
- *      Author: Shrikant
  */
 
 #ifndef SPI_H_
 #define SPI_H_
 
 /**
- * @brief initializes SPI
- *
- * @return none
+ *  Initializes USCI SPI Module for ADXL345 Communication
+ *  PARAMETERS - NONE
+ *  RETURNS       -  NONE
  */
 void ADXL345_SPI_Init();
 
 /**
- * @brief Writes to a register on a SPI device
+ * Writes to specified ADXL345 register
  *
- * @param addr The address of the register
- * @param data The byte to write to the register
+ *  PARAMETERS - Regsiter address ,Data to be written
+ *  RETURNS       -  NONE
  *
  * @return none
  */
 void ADXL345_SPI_Write(uint8_t addr, uint8_t data);
 
 /**
- * @brief Reads from a register on a SPI device
+ * Reads the value from specified ADXL345 register
  *
- * @param addr The address of the register
- *
- * @return The returned data
+ * PARAMETERS - Register address
+ * RETURNS       -  NONE
  */
 uint8_t ADXL345_SPI_Read(uint8_t addr);
-
-/**
- * @brief Reads from two registers on a SPI device
- *
- * Assumes the first register is the LSB
- *
- * @param addr The address of the register
- *
- * @return The returned data
- */
-uint16_t spi_read_double(uint8_t addr);
 
 
 

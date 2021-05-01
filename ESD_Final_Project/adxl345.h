@@ -1,8 +1,6 @@
 /*
  * adxl345.h
  *
- *  Created on: 14-Apr-2021
- *      Author: Shrikant
  */
 
 #ifndef ADXL345_H_
@@ -11,7 +9,11 @@
 #include "msp.h"
 #include "spi.h"
 
-/* ADXL345 Register Definitions */
+/* ADXL345 Register Definitions
+ *
+ * Source - ADXL345 Datasheet ,Table 16. Register MAP
+ *
+ */
 #define ADXL345_THRESH_ACT     (0x24)
 #define ADXL345_ACT_INACT_CTL  (0x27)
 #define ADXL345_THRESH_FF      (0x28)
