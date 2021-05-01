@@ -10,12 +10,16 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
+"./HCSR04.obj" \
 "./PCD8544_Character.obj" \
 "./PCD8544_Core.obj" \
 "./PCD8544_Pixel.obj" \
+"./Timers.obj" \
 "./adxl345.obj" \
 "./cbfifo.obj" \
 "./main.obj" \
+"./mlx90614.obj" \
+"./peripherals.obj" \
 "./spi.obj" \
 "./startup_msp432p401r_ccs.obj" \
 "./system_msp432p401r.obj" \
@@ -162,8 +166,8 @@ ESD_Final_Project.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "PCD8544_Character.obj" "PCD8544_Core.obj" "PCD8544_Pixel.obj" "adxl345.obj" "cbfifo.obj" "main.obj" "spi.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
-	-$(RM) "PCD8544_Character.d" "PCD8544_Core.d" "PCD8544_Pixel.d" "adxl345.d" "cbfifo.d" "main.d" "spi.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
+	-$(RM) "HCSR04.obj" "PCD8544_Character.obj" "PCD8544_Core.obj" "PCD8544_Pixel.obj" "Timers.obj" "adxl345.obj" "cbfifo.obj" "main.obj" "mlx90614.obj" "peripherals.obj" "spi.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
+	-$(RM) "HCSR04.d" "PCD8544_Character.d" "PCD8544_Core.d" "PCD8544_Pixel.d" "Timers.d" "adxl345.d" "cbfifo.d" "main.d" "mlx90614.d" "peripherals.d" "spi.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

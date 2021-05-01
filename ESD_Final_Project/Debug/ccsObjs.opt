@@ -1,1 +1,1 @@
-"./PCD8544_Character.obj" "./PCD8544_Core.obj" "./PCD8544_Pixel.obj" "./adxl345.obj" "./cbfifo.obj" "./main.obj" "./spi.obj" "./startup_msp432p401r_ccs.obj" "./system_msp432p401r.obj" "../msp432p401r.cmd" -llibc.a 
+"./HCSR04.obj" "./PCD8544_Character.obj" "./PCD8544_Core.obj" "./PCD8544_Pixel.obj" "./Timers.obj" "./adxl345.obj" "./cbfifo.obj" "./main.obj" "./mlx90614.obj" "./peripherals.obj" "./spi.obj" "./startup_msp432p401r_ccs.obj" "./system_msp432p401r.obj" "../msp432p401r.cmd" -llibc.a 
